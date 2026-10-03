@@ -1,24 +1,64 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { CalendarDays, CheckSquare, ShoppingBag, Loader2 } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { usePlanner } from "@/lib/use-planner";
+import { AuthScreen } from "@/components/planner/AuthScreen";
+import { ScheduleView } from "@/components/planner/ScheduleView";
+import { TasksView } from "@/components/planner/TasksView";
+import { ShoppingView } from "@/components/planner/ShoppingView";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "منظّم يوم الطبيب — دوامك ومناوباتك وعياداتك" },
+      { name: "description", content: "نظّم دوام المشفى والمناوبات والعيادات، وتابع دخلك ومهامك ومشترياتك في مكان واحد." },
+      { property: "og:title", content: "منظّم يوم الطبيب" },
+      { property: "og:description", content: "تقويم ذكي للطبيب: مناوبات، عيادات، دخل، مهام ومشتريات." },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const [user, setUser] = useState<User | null | undefined>(undefined);
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((_e, s) => setUser(s?.user ?? null));
+    supabase.auth.getSession().then(({ data: d }) => setUser(d.session?.user ?? null));
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  if (user === undefined)
+    return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (!user) return <AuthScreen />;
+  return <App userId={user.id} />;
+}
+
+const TABS = [
+  { id: "schedule", label: "الجدول", Icon: CalendarDays },
+  { id: "tasks", label: "المهام", Icon: CheckSquare },
+  { id: "shopping", label: "المشتريات", Icon: ShoppingBag },
+] as const;
+
+function App({ userId }: { userId: string }) {
+  const p = usePlanner(userId);
+  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("schedule");
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="min-h-screen bg-hero pb-28">
+      <main className="mx-auto max-w-2xl px-4 pt-6">
+        {tab === "schedule" ? <ScheduleView p={p} /> : tab === "tasks" ? <TasksView p={p} /> : <ShoppingView p={p} />}
+      </main>
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur">
+        <div className="mx-auto flex max-w-2xl">
+          {TABS.map(({ id, label, Icon }) => (
+            <button key={id} onClick={() => setTab(id)}
+              className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs font-medium ${tab === id ? "text-primary" : "text-muted-foreground"}`}>
+              <Icon className="h-5 w-5" />{label}
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }
