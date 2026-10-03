@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      clinic_sync_tokens: {
+        Row: {
+          created_at: string
+          last_sync_at: string | null
+          token_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          last_sync_at?: string | null
+          token_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          last_sync_at?: string | null
+          token_hash?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       planner_collections: {
         Row: {
           collection: string
