@@ -75,7 +75,7 @@ export function ScheduleView({ p }: { p: Planner }) {
       place: place.trim(), note: note.trim(),
       clinicName: isPct ? clinic.trim() : "", sharePercent: percent, revenue: income,
     }));
-    const next = editingId ? events.map((e) => (e.id === editingId ? items[0] : e)) : [...items, ...events];
+    const next = editingId ? events.map((e) => (e.id === editingId ? items[0]! : e)) : [...items, ...events];
     setSaving(true);
     try { await p.saveEvents(next); setOpen(false); setEditingId(null); setSelected(base); }
     catch { toast.error("تعذر حفظ الموعد. تحقق من اتصالك."); }
