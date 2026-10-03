@@ -58,14 +58,14 @@ export function ScheduleView({ p }: { p: Planner }) {
   const save = async (): Promise<void> => {
     if (saving) return;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast.error("تاريخ غير صالح"); return; }
-    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(start)) { toast.error("وقت غير صالح");
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(start)) { toast.error("وقت غير صالح"); return; }
     const h = toNumber(hours);
     const isPct = type === "percentageClinic";
     const percent = isPct ? toNumber(share) : 0;
     const income = isPct ? toNumber(revenue || "0") : 0;
     if (!Number.isFinite(h) || h <= 0 || h > 48) { toast.error("اختر مدة بين نصف ساعة و48 ساعة."); return; }
     if (isPct && (!clinic.trim() || !Number.isFinite(percent) || percent < 0 || percent > 100 || !Number.isFinite(income) || income < 0))
-      { toast.error("أدخل اسم العيادة ونسبة صحيحة وإيراداً لا يقل عن صفر.");
+      { toast.error("أدخل اسم العيادة ونسبة صحيحة وإيراداً لا يقل عن صفر."); return; }
     const repeats = repeat && !editingId ? Math.max(1, Math.min(MAX_REPEAT_WEEKS, Math.floor(toNumber(repeatCount) || 1))) : 1;
     const base = parseDate(date);
     const items: PlannerEvent[] = Array.from({ length: repeats }, (_, i) => ({
