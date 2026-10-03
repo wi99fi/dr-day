@@ -52,7 +52,7 @@ export const Route = createFileRoute("/api/public/clinic-sync")({
         const { data: row } = await supabaseAdmin.from("planner_collections").select("items")
           .eq("user_id", userId).eq("collection", "events").maybeSingle();
         const events = new Map<string, Record<string, unknown>>();
-        for (const e of (Array.isArray(row?.items) ? row.items : []) as Record<string, unknown>[]) events.set(String(e.id), e);
+        for (const e of (Array.isArray(row?.items) ? row.items : []) as Record<string, unknown>[]) events.set(String(e["id"]), e);
 
         let upserted = 0, removed = 0;
         for (const a of parsed.data.appointments) {
