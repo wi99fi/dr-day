@@ -14,7 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      planner_collections: {
+        Row: {
+          collection: string
+          items: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          collection: string
+          items?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          collection?: string
+          items?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
