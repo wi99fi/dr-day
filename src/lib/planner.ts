@@ -30,14 +30,14 @@ export const SHOPPING_CATEGORIES = [
 ] as const;
 export const MAX_REPEAT_WEEKS = 20;
 
-export const appointmentType = (t: AppointmentType) => APPOINTMENT_TYPES.find((i) => i.id === t) ?? APPOINTMENT_TYPES[0];
+export const appointmentType = (t: AppointmentType) => APPOINTMENT_TYPES.find((i) => i.id === t) ?? APPOINTMENT_TYPES[0]!;
 export const newId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
 
 export function dateKey(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 export function parseDate(v: string) {
-  const [y, m, d] = v.split("-").map(Number);
+  const [y = 0, m = 1, d = 1] = v.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
 export function shiftDate(date: Date, days: number) {
@@ -55,7 +55,7 @@ export function formatTime(minutes: number) {
   return `${String(Math.floor(n / 60)).padStart(2, "0")}:${String(n % 60).padStart(2, "0")}`;
 }
 export function startMinute(e: PlannerEvent) {
-  const [h, m] = e.startTime.split(":").map(Number);
+  const [h = 0, m = 0] = e.startTime.split(":").map(Number);
   return h * 60 + m;
 }
 export function segmentOnDate(e: PlannerEvent, date: Date) {
@@ -118,7 +118,7 @@ export function hasConflicts(events: PlannerEvent[], date: Date) {
     .map((e) => segmentOnDate(e, date))
     .filter((i): i is { start: number; end: number } => i !== null)
     .sort((a, b) => a.start - b.start);
-  return iv.some((it, i) => i > 0 && it.start < iv[i - 1].end);
+  return iv.some((it, i) => i > 0 && it.start < iv[i - 1]!.end);
 }
 export function toNumber(value: string) {
   return Number(
