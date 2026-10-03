@@ -49,7 +49,7 @@ export function SettingsView({ userId, onSignOut }: { userId: string; onSignOut:
       user_id: userId, token_hash: await sha256(key), created_at: new Date().toISOString(), last_sync_at: null,
     });
     setBusy(false);
-    if (error) return toast.error("تعذّر إنشاء المفتاح");
+    if (error) { toast.error("تعذّر إنشاء المفتاح"); return; }
     setNewKey(key);
     void load();
   };
