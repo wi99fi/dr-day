@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BarChart3, CalendarDays, CheckSquare, ShoppingBag, Loader2 } from "lucide-react";
+import { Settings, BarChart3, CalendarDays, CheckSquare, ShoppingBag, Loader2 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlanner } from "@/lib/use-planner";
@@ -9,6 +9,7 @@ import { ScheduleView } from "@/components/planner/ScheduleView";
 import { DashboardView } from "@/components/planner/DashboardView";
 import { TasksView } from "@/components/planner/TasksView";
 import { ShoppingView } from "@/components/planner/ShoppingView";
+import { SettingsView } from "@/components/planner/SettingsView";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -41,6 +42,7 @@ const TABS = [
   { id: "dashboard", label: "اللوحة", Icon: BarChart3 },
   { id: "tasks", label: "المهام", Icon: CheckSquare },
   { id: "shopping", label: "المشتريات", Icon: ShoppingBag },
+  { id: "settings", label: "الإعدادات", Icon: Settings },
 ] as const;
 
 function App({ userId }: { userId: string }) {
@@ -49,7 +51,7 @@ function App({ userId }: { userId: string }) {
   return (
     <div className="min-h-screen bg-hero pb-28">
       <main className="mx-auto max-w-2xl px-4 pt-6">
-        {tab === "schedule" ? <ScheduleView p={p} /> : tab === "dashboard" ? <DashboardView p={p} /> : tab === "tasks" ? <TasksView p={p} /> : <ShoppingView p={p} />}
+        {tab === "schedule" ? <ScheduleView p={p} /> : tab === "dashboard" ? <DashboardView p={p} /> : tab === "tasks" ? <TasksView p={p} /> : tab === "settings" ? <SettingsView userId={userId} onSignOut={() => supabase.auth.signOut()} /> : <ShoppingView p={p} />}
       </main>
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur">
         <div className="mx-auto flex max-w-2xl">
