@@ -2,10 +2,11 @@ import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, TrendingDown, TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { Planner } from "@/lib/use-planner";
-import { APPOINTMENT_TYPES, formatArabicNumber, monthHoursByType, parseDate, type AppointmentType } from "@/lib/planner";
+import { APPOINTMENT_TYPES, formatArabicNumber, monthHoursByType, parseDate, type AppointmentType, isPersonalActivity } from "@/lib/planner";
 import { Panel } from "./ui";
+import { EventIcon } from "./EventIcon";
 
-const TYPE_VAR: Record<AppointmentType, string> = {
+const TYPE_VAR: Partial<Record<AppointmentType, string>> = {
   hospital: "var(--evt-hospital)", shift: "var(--evt-shift)", ownClinic: "var(--evt-own)", percentageClinic: "var(--evt-percent)",
 };
 const TREND_MONTHS = 6;
@@ -15,7 +16,7 @@ export function DashboardView({ p }: { p: Planner }) {
   const [month, setMonth] = useState(() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); });
 
   const stats = (m: Date) => {
-    const inMonth = events.filter((e) => { const d = parseDate(e.date); return d.getFullYear() === m.getFullYear() && d.getMonth() === m.getMonth(); });
+    const inMonth = events.filter((e) => { const d = parseDate(e.date); return !isPersonalActivity(e.type) && d.getFullYear() === m.getFullYear() && d.getMonth() === m.getMonth(); });
     const income = new Map<AppointmentType, number>();
     const visits = new Map<AppointmentType, number>();
     const revenue = inMonth.reduce((s, e) => s + (e.type === "percentageClinic" ? e.revenue : 0), 0);
@@ -83,7 +84,7 @@ export function DashboardView({ p }: { p: Planner }) {
         <h3 className="font-bold">حسب نوع الموعد</h3>
         {APPOINTMENT_TYPES.map((t) => (
           <div key={t.id} className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm">
-            <span className={`h-2.5 w-2.5 rounded-full ${t.cls}`} />
+            <EventIcon type={t.id} className="h-4 w-4 text-primary" />
             <span className="flex-1">{t.label}</span>
             <span className="text-muted-foreground">{formatArabicNumber(cur.visits.get(t.id) ?? 0)} موعد · {formatArabicNumber((cur.hours.get(t.id) ?? 0) / 60, 1)} س</span>
             <span className="w-20 text-left font-bold">{t.id === "percentageClinic" ? formatArabicNumber(cur.income.get(t.id) ?? 0, 2) : "—"}</span>
@@ -133,7 +134,7 @@ export function DashboardView({ p }: { p: Planner }) {
           </ResponsiveContainer>
         </div>
         <div className="flex flex-wrap gap-3 text-xs">
-          {APPOINTMENT_TYPES.map((t) => <span key={t.id} className="flex items-center gap-1"><span className={`h-2.5 w-2.5 rounded-full ${t.cls}`} />{t.label}</span>)}
+          {APPOINTMENT_TYPES.map((t) => <span key={t.id} className="flex items-center gap-1"><EventIcon type={t.id} className="h-4 w-4 text-primary" />{t.label}</span>)}
         </div>
       </Panel>
     </div>

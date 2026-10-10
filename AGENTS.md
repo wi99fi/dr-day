@@ -11,3 +11,4 @@
 
 - Planner data lives in one `planner_collections` row per user and collection (events/tasks/shopping), with JSON items and owner-only access rules — mirrors the original app's storage so existing data maps one-to-one.
 - Settings use a transient client-side privacy lock through a floating icon; closing settings discards access, while cloud owner policies remain the security boundary.
+- Personal activities share the existing event collection with optional custom-name/icon fields; medical type lists remain separate so personal time never enters work charts or clinic income.

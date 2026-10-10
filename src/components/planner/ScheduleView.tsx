@@ -4,11 +4,12 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Planner } from "@/lib/use-planner";
 import {
-  APPOINTMENT_TYPES, appointmentType, dateKey, formatArabicNumber, formatTime, groupTimeline, hasConflicts,
+  APPOINTMENT_TYPES, ACTIVITY_TYPES, EVENT_TYPES, eventLabel, isPersonalActivity, appointmentType, dateKey, formatArabicNumber, formatTime, groupTimeline, hasConflicts,
   MAX_REPEAT_WEEKS, monthCells, monthHoursByType, newId, parseDate, segmentOnDate, shiftDate, startMinute, toNumber,
-  WEEKDAY_LABELS, type AppointmentType, type PlannerEvent,
+  WEEKDAY_LABELS, type ActivityIconName, type AppointmentType, type PlannerEvent,
 } from "@/lib/planner";
 import { Chip, Field, Panel, PrimaryButton, Sheet } from "./ui";
+import { ACTIVITY_ICONS, EventIcon } from "./EventIcon";
 
 const HOUR_PX = 36;
 
@@ -19,6 +20,8 @@ export function ScheduleView({ p }: { p: Planner }) {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [type, setType] = useState<AppointmentType>("hospital");
+  const [activityName, setActivityName] = useState("");
+  const [activityIcon, setActivityIcon] = useState<ActivityIconName>("star");
   const [date, setDate] = useState(dateKey(new Date()));
   const [start, setStart] = useState("09:00");
   const [hours, setHours] = useState("8");
@@ -46,11 +49,11 @@ export function ScheduleView({ p }: { p: Planner }) {
   const todayKey = dateKey(new Date());
 
   const openNew = () => {
-    setEditingId(null); setType("hospital"); setDate(dateKey(selected)); setStart("09:00"); setHours("8");
+    setActivityName(""); setActivityIcon("star"); setEditingId(null); setType("hospital"); setDate(dateKey(selected)); setStart("09:00"); setHours("8");
     setPlace(""); setNote(""); setClinic(""); setShare("40"); setRevenue(""); setRepeat(false); setRepeatCount("4"); setOpen(true);
   };
   const openEdit = (e: PlannerEvent) => {
-    setEditingId(e.id); setType(e.type); setDate(e.date); setStart(e.startTime); setHours(String(e.durationMinutes / 60));
+    setActivityName(e.activityName ?? ""); setActivityIcon(e.activityIcon ?? "star"); setEditingId(e.id); setType(e.type); setDate(e.date); setStart(e.startTime); setHours(String(e.durationMinutes / 60));
     setPlace(e.place); setNote(e.note); setClinic(e.clinicName); setShare(String(e.sharePercent)); setRevenue(String(e.revenue)); setRepeat(false); setOpen(true);
   };
   const changeType = (t: AppointmentType) => { setType(t); setHours(String(appointmentType(t).defaultDurationMinutes / 60)); };
@@ -59,6 +62,7 @@ export function ScheduleView({ p }: { p: Planner }) {
     if (saving) return;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast.error("تاريخ غير صالح"); return; }
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(start)) { toast.error("وقت غير صالح"); return; }
+    if (type === "other" && !activityName.trim()) { toast.error("أدخل اسم النشاط"); return; }
     const h = toNumber(hours);
     const isPct = type === "percentageClinic";
     const percent = isPct ? toNumber(share) : 0;
@@ -73,9 +77,12 @@ export function ScheduleView({ p }: { p: Planner }) {
       date: dateKey(shiftDate(base, i * 7)),
       startTime: start, durationMinutes: Math.round(h * 60), type,
       place: place.trim(), note: note.trim(),
+      ...(type === "other" ? { activityName: activityName.trim(), activityIcon } : {}),
       clinicName: isPct ? clinic.trim() : "", sharePercent: percent, revenue: income,
     }));
-    const next = editingId ? events.map((e) => (e.id === editingId ? items[0]! : e)) : [...items, ...events];
+    const first = items[0];
+    if (!first) return;
+    const next = editingId ? events.map((e) => (e.id === editingId ? first : e)) : [...items, ...events];
     setSaving(true);
     try { await p.saveEvents(next); setOpen(false); setEditingId(null); setSelected(base); }
     catch { toast.error("تعذر حفظ الموعد. تحقق من اتصالك."); }
@@ -83,7 +90,7 @@ export function ScheduleView({ p }: { p: Planner }) {
   };
 
   const remove = async (e: PlannerEvent) => {
-    if (!confirm(`حذف الموعد؟\n${appointmentType(e.type).label} · ${e.date}`)) return;
+    if (!confirm(`حذف الموعد؟\n${eventLabel(e)} · ${e.date}`)) return;
     try { await p.saveEvents(events.filter((i) => i.id !== e.id)); setOpen(false); } catch { toast.error("تعذر الحذف."); }
   };
 
@@ -116,13 +123,13 @@ export function ScheduleView({ p }: { p: Planner }) {
             const k = dateKey(d);
             const inMonth = d.getMonth() === month.getMonth();
             const isSel = k === dateKey(selected);
-            const types = Array.from(new Set(events.filter((e) => segmentOnDate(e, d)).map((e) => e.type)));
+            const markers = Array.from(new Map(events.filter((e) => segmentOnDate(e, d)).map((e) => [`${e.type}-${e.activityIcon ?? ""}`, e])).values());
             return (
-              <button key={k} onClick={() => setSelected(d)}
-                className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-xl text-sm transition ${isSel ? "bg-primary text-primary-foreground" : k === todayKey ? "bg-accent font-bold text-accent-foreground" : "hover:bg-muted"} ${inMonth ? "" : "opacity-35"}`}>
+              <PrimaryButton variant="secondary" key={k} aria-label={d.toLocaleDateString("ar-SY", { day: "numeric", month: "long" })} onClick={() => setSelected(d)}
+                className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-xl bg-transparent p-0 text-sm transition ${isSel ? "bg-primary text-primary-foreground" : k === todayKey ? "bg-accent font-bold text-accent-foreground" : "hover:bg-muted"} ${inMonth ? "" : "opacity-35"}`}>
                 <span>{formatArabicNumber(d.getDate())}</span>
-                <span className="flex h-1.5 gap-0.5">{types.slice(0, 4).map((t) => <span key={t} className={`h-1.5 w-1.5 rounded-full ${appointmentType(t).cls}`} />)}</span>
-              </button>
+                <span className="flex h-3.5 max-w-full items-center gap-0.5">{markers.slice(0, 2).map((e) => <span key={`${e.type}-${e.activityIcon ?? ""}`} title={eventLabel(e)}><EventIcon type={e.type} activityIcon={e.activityIcon} className="h-3 w-3" /></span>)}{markers.length > 2 && <span className="text-[9px]">+{formatArabicNumber(markers.length - 2)}</span>}</span>
+              </PrimaryButton>
             );
           })}
         </div>
@@ -131,9 +138,9 @@ export function ScheduleView({ p }: { p: Planner }) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold">{selectedLabel}</h2>
-          <p className="text-sm text-muted-foreground">{dayEvents.length ? `${formatArabicNumber(dailyMin / 60, 1)} ساعة عمل` : "يوم فارغ"}</p>
+          <p className="text-sm text-muted-foreground">{dayEvents.length ? `${formatArabicNumber(dailyMin / 60, 1)} ساعة مجدولة` : "يوم فارغ"}</p>
         </div>
-        <PrimaryButton className="w-auto" onClick={openNew}><Plus className="h-4 w-4" />موعد</PrimaryButton>
+        <PrimaryButton className="w-auto" onClick={openNew}><Plus className="h-4 w-4" />إضافة</PrimaryButton>
       </div>
       {conflict ? <div className="flex items-center gap-2 rounded-xl bg-warning/15 px-3 py-2 text-sm text-warning-foreground"><AlertTriangle className="h-4 w-4" />يوجد تعارض بين مواعيد هذا اليوم</div> : null}
 
@@ -149,9 +156,9 @@ export function ScheduleView({ p }: { p: Planner }) {
               <div className="absolute inset-y-0 left-2 right-14">
                 {positioned.map(({ event, start: s, end, lane, laneCount }) => (
                   <button key={event.id} onClick={() => openEdit(event)}
-                    className={`absolute overflow-hidden rounded-lg px-2 py-1 text-right text-xs text-primary-foreground shadow-soft ${appointmentType(event.type).cls}`}
+                    className="absolute overflow-hidden rounded-lg border border-border bg-accent px-2 py-1 text-right text-xs text-accent-foreground shadow-soft"
                     style={{ top: (s / 60) * HOUR_PX, height: Math.max(20, ((end - s) / 60) * HOUR_PX - 2), right: `${(lane / laneCount) * 100}%`, width: `calc(${100 / laneCount}% - 4px)` }}>
-                    <div className="font-semibold">{event.type === "percentageClinic" && event.clinicName ? event.clinicName : appointmentType(event.type).label}</div>
+                    <div className="flex items-center gap-1 font-semibold"><EventIcon type={event.type} activityIcon={event.activityIcon} className="h-3.5 w-3.5" /><span className="truncate">{eventLabel(event)}</span></div>
                     <div className="opacity-90">{formatTime(startMinute(event))} – {formatTime(startMinute(event) + event.durationMinutes)}{event.place ? ` · ${event.place}` : ""}</div>
                   </button>
                 ))}
@@ -164,9 +171,9 @@ export function ScheduleView({ p }: { p: Planner }) {
       <Panel className="space-y-3">
         <h3 className="font-bold">ملخص {monthLabel}</h3>
         <div className="grid grid-cols-2 gap-2">
-          {APPOINTMENT_TYPES.map((t) => (
+          {EVENT_TYPES.filter((t) => !isPersonalActivity(t.id) || totals.has(t.id)).map((t) => (
             <div key={t.id} className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2">
-              <span className={`h-2.5 w-2.5 rounded-full ${t.cls}`} />
+              <EventIcon type={t.id} className="h-4 w-4 text-primary" />
               <span className="flex-1 text-sm">{t.label}</span>
               <span className="text-sm font-bold">{formatArabicNumber((totals.get(t.id) ?? 0) / 60, 1)} س</span>
             </div>
@@ -181,14 +188,21 @@ export function ScheduleView({ p }: { p: Planner }) {
         </div>
       </Panel>
 
-      <Sheet open={open} title={editingId ? "تعديل الموعد" : "موعد جديد"} onClose={() => setOpen(false)}
+      <Sheet open={open} title={editingId ? "تعديل الموعد أو النشاط" : "إضافة موعد أو نشاط"} onClose={() => setOpen(false)}
         footer={<div className="flex gap-2">
           {editingId ? <PrimaryButton variant="secondary" className="w-auto" onClick={() => { const e = events.find((i) => i.id === editingId); if (e) remove(e); }}><Trash2 className="h-4 w-4" /></PrimaryButton> : null}
-          <PrimaryButton onClick={save} disabled={saving}>{saving ? "جارٍ الحفظ..." : "حفظ الموعد"}</PrimaryButton>
+          <PrimaryButton onClick={save} disabled={saving}>{saving ? "جارٍ الحفظ..." : "حفظ"}</PrimaryButton>
         </div>}>
-        <div className="flex flex-wrap gap-2">
-          {APPOINTMENT_TYPES.map((t) => <Chip key={t.id} active={type === t.id} onClick={() => changeType(t.id)} colorClass={t.cls}>{t.label}</Chip>)}
-        </div>
+        {[{ label: "المواعيد الطبية", items: APPOINTMENT_TYPES }, { label: "نشاطات يومية", items: ACTIVITY_TYPES }].map((group) => (
+          <div key={group.label} className="space-y-2">
+            <p className="text-sm font-medium text-muted-foreground">{group.label}</p>
+            <div className="flex flex-wrap gap-2">{group.items.map((t) => <Chip key={t.id} active={type === t.id} onClick={() => changeType(t.id)}><EventIcon type={t.id} />{t.label}</Chip>)}</div>
+          </div>
+        ))}
+        {type === "other" && <div className="space-y-3">
+          <Field label="اسم النشاط" value={activityName} onChange={(e) => setActivityName(e.target.value)} />
+          <div className="flex flex-wrap gap-2">{ACTIVITY_ICONS.map((icon) => <PrimaryButton key={icon.id} variant={activityIcon === icon.id ? "primary" : "secondary"} className="h-10 w-10 p-0" aria-label={icon.label} title={icon.label} aria-pressed={activityIcon === icon.id} onClick={() => setActivityIcon(icon.id)}><EventIcon type="other" activityIcon={icon.id} /></PrimaryButton>)}</div>
+        </div>}
         <div className="grid grid-cols-2 gap-3">
           <Field label="التاريخ" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           <Field label="وقت البدء" type="time" value={start} onChange={(e) => setStart(e.target.value)} />
