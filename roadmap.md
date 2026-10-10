@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Move settings into a floating button with a code prompt and verify access.
+
 - [x] Verify trial appointment from sync endpoint landed in the user's planner.
 - [x] Remove the trial appointment (send deleted: true).
 - [x] Deliver final copy-paste sync instructions with the real key filled in.
