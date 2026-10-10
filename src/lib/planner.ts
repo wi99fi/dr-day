@@ -1,4 +1,5 @@
-export type AppointmentType = "hospital" | "shift" | "ownClinic" | "percentageClinic";
+export type AppointmentType = "hospital" | "shift" | "ownClinic" | "percentageClinic" | "lunch" | "break" | "gym" | "prayer" | "other";
+export type ActivityIconName = "utensils" | "coffee" | "dumbbell" | "prayer" | "book" | "walk" | "heart" | "star";
 
 export type PlannerEvent = {
   id: string;
@@ -11,6 +12,8 @@ export type PlannerEvent = {
   clinicName: string;
   sharePercent: number;
   revenue: number;
+  activityName?: string;
+  activityIcon?: ActivityIconName;
 };
 export type PlannerTask = { id: string; text: string; done: boolean; dueDate: string | null };
 export type ShoppingCategory = "pharmacy" | "home" | "clinic" | null;
@@ -22,6 +25,18 @@ export const APPOINTMENT_TYPES: { id: AppointmentType; label: string; cls: strin
   { id: "ownClinic", label: "عيادتي", cls: "evt-own", defaultDurationMinutes: 120 },
   { id: "percentageClinic", label: "عيادة بالنسبة", cls: "evt-percent", defaultDurationMinutes: 120 },
 ];
+export const ACTIVITY_TYPES: typeof APPOINTMENT_TYPES = [
+  { id: "lunch", label: "وقت غداء", cls: "", defaultDurationMinutes: 60 },
+  { id: "break", label: "استراحة", cls: "", defaultDurationMinutes: 30 },
+  { id: "gym", label: "نادي", cls: "", defaultDurationMinutes: 60 },
+  { id: "prayer", label: "صلاة", cls: "", defaultDurationMinutes: 15 },
+  { id: "other", label: "نشاط آخر", cls: "", defaultDurationMinutes: 60 },
+];
+export const EVENT_TYPES = [...APPOINTMENT_TYPES, ...ACTIVITY_TYPES];
+export const isPersonalActivity = (type: AppointmentType) => ACTIVITY_TYPES.some((item) => item.id === type);
+export const eventLabel = (event: PlannerEvent) => event.type === "other" && event.activityName?.trim()
+  ? event.activityName.trim()
+  : event.type === "percentageClinic" && event.clinicName ? event.clinicName : appointmentType(event.type).label;
 export const WEEKDAY_LABELS = ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
 export const SHOPPING_CATEGORIES = [
   { id: "pharmacy", label: "صيدلية" },
@@ -30,7 +45,7 @@ export const SHOPPING_CATEGORIES = [
 ] as const;
 export const MAX_REPEAT_WEEKS = 20;
 
-export const appointmentType = (t: AppointmentType) => APPOINTMENT_TYPES.find((i) => i.id === t) ?? APPOINTMENT_TYPES[0]!;
+export const appointmentType = (t: AppointmentType) => EVENT_TYPES.find((i) => i.id === t) ?? { id: "other" as const, label: "نشاط آخر", cls: "", defaultDurationMinutes: 60 };
 export const newId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
 
 export function dateKey(d: Date) {
