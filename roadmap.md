@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Move settings into a floating button with a code prompt and verify access.
+- [x] Move settings into a floating button with a code prompt; correct and incorrect code tests pass.
 
 - [x] Verify trial appointment from sync endpoint landed in the user's planner.
 - [x] Remove the trial appointment (send deleted: true).
