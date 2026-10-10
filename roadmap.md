@@ -1,7 +1,7 @@
 # Roadmap
 
-- [ ] Add personal activities and custom names/icons to the schedule.
-- [ ] Replace color markers with icons and test saving/editing activities.
+- [x] Add personal activities and custom names/icons to the schedule.
+- [x] Replace color markers with icons and test saving/editing activities (7 tests pass; build OK).
 
 - [x] Move settings into a floating button with a code prompt; correct and incorrect code tests pass.
 
