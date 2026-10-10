@@ -10,7 +10,7 @@ export const ACTIVITY_ICONS: { id: ActivityIconName; label: string }[] = [
 const personalIcons = { utensils: Utensils, coffee: Coffee, dumbbell: Dumbbell, prayer: HandHeart, book: BookOpen, walk: PersonStanding, heart: Heart, star: Star };
 const eventIcons = { hospital: Hospital, shift: MoonStar, ownClinic: Stethoscope, percentageClinic: Sunrise, lunch: Utensils, break: Coffee, gym: Dumbbell, prayer: HandHeart, other: Star };
 
-export function EventIcon({ type, activityIcon, className = "h-4 w-4" }: { type: AppointmentType; activityIcon?: ActivityIconName; className?: string }) {
+export function EventIcon({ type, activityIcon, className = "h-4 w-4" }: { type: AppointmentType; activityIcon?: ActivityIconName | undefined; className?: string }) {
   const Icon = (type === "other" && activityIcon ? personalIcons[activityIcon] : eventIcons[type]) ?? Star;
   return <Icon className={`shrink-0 ${className}`} aria-hidden="true" />;
 }

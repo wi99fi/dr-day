@@ -123,7 +123,7 @@ export function ScheduleView({ p }: { p: Planner }) {
             const k = dateKey(d);
             const inMonth = d.getMonth() === month.getMonth();
             const isSel = k === dateKey(selected);
-            const types = Array.from(new Set(events.filter((e) => segmentOnDate(e, d)).map((e) => e.type)));
+            const markers = Array.from(new Map(events.filter((e) => segmentOnDate(e, d)).map((e) => [`${e.type}-${e.activityIcon ?? ""}`, e])).values());
             return (
               <PrimaryButton variant="secondary" key={k} aria-label={d.toLocaleDateString("ar-SY", { day: "numeric", month: "long" })} onClick={() => setSelected(d)}
                 className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-xl bg-transparent p-0 text-sm transition ${isSel ? "bg-primary text-primary-foreground" : k === todayKey ? "bg-accent font-bold text-accent-foreground" : "hover:bg-muted"} ${inMonth ? "" : "opacity-35"}`}>
