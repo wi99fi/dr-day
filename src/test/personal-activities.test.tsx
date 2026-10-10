@@ -29,7 +29,7 @@ describe("Personal activities", () => {
     render(<ScheduleView p={p} />);
     fireEvent.click(screen.getByRole("button", { name: /قراءة.*09:00/ }));
     fireEvent.change(screen.getByLabelText("اسم النشاط"), { target: { value: "مشي" } });
-    fireEvent.click(screen.getByRole("button", { name: "مشي", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: /^مشي$/ }));
     fireEvent.click(screen.getByRole("button", { name: "حفظ" }));
     await waitFor(() => expect(p.saveEvents).toHaveBeenCalledWith([expect.objectContaining({ id: "personal-1", type: "other", activityName: "مشي", activityIcon: "walk" })]));
     expect(monthHoursByType([event], new Date()).get("other")).toBe(60);
