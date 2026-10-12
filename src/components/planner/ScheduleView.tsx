@@ -10,6 +10,7 @@ import {
 } from "@/lib/planner";
 import { Chip, Field, Panel, PrimaryButton, Sheet } from "./ui";
 import { ACTIVITY_ICONS, EventIcon } from "./EventIcon";
+import { NextEventTimer } from "./NextEventTimer";
 
 const HOUR_PX = 36;
 
