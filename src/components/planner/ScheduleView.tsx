@@ -10,6 +10,7 @@ import {
 } from "@/lib/planner";
 import { Chip, Field, Panel, PrimaryButton, Sheet } from "./ui";
 import { ACTIVITY_ICONS, EventIcon } from "./EventIcon";
+import { NextEventTimer } from "./NextEventTimer";
 
 const HOUR_PX = 36;
 
@@ -96,10 +97,10 @@ export function ScheduleView({ p }: { p: Planner }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">جدولك الطبي</p>
-          <h1 className="text-3xl font-bold">منظّم يوم الطبيب</h1>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1 space-y-2">
+          <h1 data-app-title className="cursor-default select-none text-sm font-medium text-muted-foreground">منظّم يوم الطبيب</h1>
+          <NextEventTimer events={events} />
         </div>
         <button aria-label="تسجيل الخروج" className="rounded-xl p-2.5 text-muted-foreground hover:bg-muted"
           onClick={() => confirm("تسجيل الخروج؟ ستبقى بياناتك محفوظة في حسابك.") && supabase.auth.signOut()}>
