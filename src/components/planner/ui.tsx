@@ -80,7 +80,7 @@ export function PageHeader({ eyebrow, title, icon, action }: { eyebrow: string; 
     <div className="flex items-center justify-between">
       <div>
         <p className="text-sm text-muted-foreground">{eyebrow}</p>
-        <h1 className="text-3xl font-bold">{title}</h1>
+        <h1 data-app-title className="cursor-default select-none text-3xl font-bold">{title}</h1>
       </div>
       {action ?? <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-primary">{icon}</div>}
     </div>
