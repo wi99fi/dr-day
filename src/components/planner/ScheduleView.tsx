@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, ChevronLeft, ChevronRight, CloudOff, LogOut, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, CloudOff, LogOut, Plus, Sparkles, Trash2 } from "lucide-react";
+import { AiArrangeSheet } from "./AiArrangeSheet";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Planner } from "@/lib/use-planner";
@@ -34,6 +35,7 @@ export function ScheduleView({ p }: { p: Planner }) {
   const [repeat, setRepeat] = useState(false);
   const [repeatCount, setRepeatCount] = useState("4");
   const [saving, setSaving] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
 
   const cells = useMemo(() => monthCells(month), [month]);
   const dayEvents = useMemo(() => events.filter((e) => segmentOnDate(e, selected)).sort((a, b) => startMinute(a) - startMinute(b)), [events, selected]);
@@ -192,6 +194,7 @@ export function ScheduleView({ p }: { p: Planner }) {
         </div>
       </Panel>
 
+      <AiArrangeSheet open={aiOpen} onClose={() => setAiOpen(false)} date={selected} events={events} onSave={p.saveEvents} />
       <Sheet open={open} title={editingId ? "تعديل الموعد أو النشاط" : "إضافة موعد أو نشاط"} onClose={() => setOpen(false)}
         footer={<div className="flex gap-2">
           {editingId ? <PrimaryButton variant="secondary" className="w-auto" onClick={() => { const e = events.find((i) => i.id === editingId); if (e) remove(e); }}><Trash2 className="h-4 w-4" /></PrimaryButton> : null}
