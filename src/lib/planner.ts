@@ -14,6 +14,8 @@ export type PlannerEvent = {
   revenue: number;
   activityName?: string;
   activityIcon?: ActivityIconName;
+  done?: boolean;
+  doneNote?: string;
 };
 export type PlannerTask = { id: string; text: string; done: boolean; dueDate: string | null };
 export type ShoppingCategory = "pharmacy" | "home" | "clinic" | null;
@@ -34,7 +36,7 @@ export const ACTIVITY_TYPES: typeof APPOINTMENT_TYPES = [
 ];
 export const EVENT_TYPES = [...APPOINTMENT_TYPES, ...ACTIVITY_TYPES];
 export const isPersonalActivity = (type: AppointmentType) => ACTIVITY_TYPES.some((item) => item.id === type);
-export const eventLabel = (event: PlannerEvent) => event.type === "other" && event.activityName?.trim()
+export const eventLabel = (event: PlannerEvent) => (event.type === "other" || event.type === "prayer") && event.activityName?.trim()
   ? event.activityName.trim()
   : event.type === "percentageClinic" && event.clinicName ? event.clinicName : appointmentType(event.type).label;
 export const WEEKDAY_LABELS = ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
