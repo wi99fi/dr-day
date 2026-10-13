@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, ChevronLeft, ChevronRight, CloudOff, LogOut, Plus, Sparkles, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, CloudOff, LogOut, Plus, Sparkles, Trash2 } from "lucide-react";
+import { isPrayerTimeEvent, prayerEventsAround } from "@/lib/prayer-times";
 import { AiArrangeSheet } from "./AiArrangeSheet";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,10 +37,14 @@ export function ScheduleView({ p }: { p: Planner }) {
   const [repeatCount, setRepeatCount] = useState("4");
   const [saving, setSaving] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
+  const [done, setDone] = useState(false);
+  const [doneNote, setDoneNote] = useState("");
 
   const cells = useMemo(() => monthCells(month), [month]);
+  const shown = useMemo(() => [...events, ...prayerEventsAround(selected)], [events, selected]);
+  const timerEvents = useMemo(() => [...events, ...prayerEventsAround(new Date())], [events]);
   const dayEvents = useMemo(() => events.filter((e) => segmentOnDate(e, selected)).sort((a, b) => startMinute(a) - startMinute(b)), [events, selected]);
-  const positioned = useMemo(() => groupTimeline(events, selected), [events, selected]);
+  const positioned = useMemo(() => groupTimeline(shown, selected), [shown, selected]);
   const conflict = useMemo(() => hasConflicts(events, selected), [events, selected]);
   const dailyMin = dayEvents.reduce((s, e) => { const g = segmentOnDate(e, selected); return s + (g ? g.end - g.start : 0); }, 0);
   const totals = useMemo(() => monthHoursByType(events, month), [events, month]);
@@ -53,11 +58,12 @@ export function ScheduleView({ p }: { p: Planner }) {
 
   const openNew = () => {
     setActivityName(""); setActivityIcon("star"); setEditingId(null); setType("hospital"); setDate(dateKey(selected)); setStart("09:00"); setHours("8");
-    setPlace(""); setNote(""); setClinic(""); setShare("40"); setRevenue(""); setRepeat(false); setRepeatCount("4"); setOpen(true);
+    setPlace(""); setNote(""); setClinic(""); setShare("40"); setRevenue(""); setRepeat(false); setRepeatCount("4"); setDone(false); setDoneNote(""); setOpen(true);
   };
   const openEdit = (e: PlannerEvent) => {
+    if (isPrayerTimeEvent(e)) { toast(`${eventLabel(e)} · ${e.startTime}`); return; }
     setActivityName(e.activityName ?? ""); setActivityIcon(e.activityIcon ?? "star"); setEditingId(e.id); setType(e.type); setDate(e.date); setStart(e.startTime); setHours(String(e.durationMinutes / 60));
-    setPlace(e.place); setNote(e.note); setClinic(e.clinicName); setShare(String(e.sharePercent)); setRevenue(String(e.revenue)); setRepeat(false); setOpen(true);
+    setPlace(e.place); setNote(e.note); setClinic(e.clinicName); setShare(String(e.sharePercent)); setRevenue(String(e.revenue)); setRepeat(false); setDone(!!e.done); setDoneNote(e.doneNote ?? ""); setOpen(true);
   };
   const changeType = (t: AppointmentType) => { setType(t); setHours(String(appointmentType(t).defaultDurationMinutes / 60)); };
 
@@ -82,6 +88,7 @@ export function ScheduleView({ p }: { p: Planner }) {
       place: place.trim(), note: note.trim(),
       ...(type === "other" ? { activityName: activityName.trim(), activityIcon } : {}),
       clinicName: isPct ? clinic.trim() : "", sharePercent: percent, revenue: income,
+      ...(editingId && done ? { done: true, doneNote: doneNote.trim() } : {}),
     }));
     const first = items[0];
     if (!first) return;
@@ -102,7 +109,7 @@ export function ScheduleView({ p }: { p: Planner }) {
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-2">
           <h1 data-app-title className="cursor-default select-none text-sm font-medium text-muted-foreground">منظّم يوم الطبيب</h1>
-          <NextEventTimer events={events} />
+          <NextEventTimer events={timerEvents} />
         </div>
         <button aria-label="تسجيل الخروج" className="rounded-xl p-2.5 text-muted-foreground hover:bg-muted"
           onClick={() => confirm("تسجيل الخروج؟ ستبقى بياناتك محفوظة في حسابك.") && supabase.auth.signOut()}>
