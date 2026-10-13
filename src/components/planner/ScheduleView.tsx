@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, ChevronLeft, ChevronRight, CloudOff, LogOut, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, CloudOff, LogOut, Plus, Sparkles, Trash2 } from "lucide-react";
+import { AiArrangeSheet } from "./AiArrangeSheet";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Planner } from "@/lib/use-planner";
@@ -34,6 +35,7 @@ export function ScheduleView({ p }: { p: Planner }) {
   const [repeat, setRepeat] = useState(false);
   const [repeatCount, setRepeatCount] = useState("4");
   const [saving, setSaving] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
 
   const cells = useMemo(() => monthCells(month), [month]);
   const dayEvents = useMemo(() => events.filter((e) => segmentOnDate(e, selected)).sort((a, b) => startMinute(a) - startMinute(b)), [events, selected]);
@@ -141,7 +143,10 @@ export function ScheduleView({ p }: { p: Planner }) {
           <h2 className="text-xl font-bold">{selectedLabel}</h2>
           <p className="text-sm text-muted-foreground">{dayEvents.length ? `${formatArabicNumber(dailyMin / 60, 1)} ساعة مجدولة` : "يوم فارغ"}</p>
         </div>
-        <PrimaryButton className="w-auto" onClick={openNew}><Plus className="h-4 w-4" />إضافة</PrimaryButton>
+        <div className="flex gap-2">
+          <PrimaryButton variant="secondary" className="w-auto" aria-label="ترتيب بالذكاء الاصطناعي" onClick={() => setAiOpen(true)}><Sparkles className="h-4 w-4" />رتّب</PrimaryButton>
+          <PrimaryButton className="w-auto" onClick={openNew}><Plus className="h-4 w-4" />إضافة</PrimaryButton>
+        </div>
       </div>
       {conflict ? <div className="flex items-center gap-2 rounded-xl bg-warning/15 px-3 py-2 text-sm text-warning-foreground"><AlertTriangle className="h-4 w-4" />يوجد تعارض بين مواعيد هذا اليوم</div> : null}
 
@@ -189,6 +194,7 @@ export function ScheduleView({ p }: { p: Planner }) {
         </div>
       </Panel>
 
+      <AiArrangeSheet open={aiOpen} onClose={() => setAiOpen(false)} date={selected} events={events} onSave={p.saveEvents} />
       <Sheet open={open} title={editingId ? "تعديل الموعد أو النشاط" : "إضافة موعد أو نشاط"} onClose={() => setOpen(false)}
         footer={<div className="flex gap-2">
           {editingId ? <PrimaryButton variant="secondary" className="w-auto" onClick={() => { const e = events.find((i) => i.id === editingId); if (e) remove(e); }}><Trash2 className="h-4 w-4" /></PrimaryButton> : null}
