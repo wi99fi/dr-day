@@ -141,7 +141,10 @@ export function ScheduleView({ p }: { p: Planner }) {
           <h2 className="text-xl font-bold">{selectedLabel}</h2>
           <p className="text-sm text-muted-foreground">{dayEvents.length ? `${formatArabicNumber(dailyMin / 60, 1)} ساعة مجدولة` : "يوم فارغ"}</p>
         </div>
-        <PrimaryButton className="w-auto" onClick={openNew}><Plus className="h-4 w-4" />إضافة</PrimaryButton>
+        <div className="flex gap-2">
+          <PrimaryButton variant="secondary" className="w-auto" aria-label="ترتيب بالذكاء الاصطناعي" onClick={() => setAiOpen(true)}><Sparkles className="h-4 w-4" />رتّب</PrimaryButton>
+          <PrimaryButton className="w-auto" onClick={openNew}><Plus className="h-4 w-4" />إضافة</PrimaryButton>
+        </div>
       </div>
       {conflict ? <div className="flex items-center gap-2 rounded-xl bg-warning/15 px-3 py-2 text-sm text-warning-foreground"><AlertTriangle className="h-4 w-4" />يوجد تعارض بين مواعيد هذا اليوم</div> : null}
 
