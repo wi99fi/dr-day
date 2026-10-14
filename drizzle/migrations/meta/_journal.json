@@ -15,6 +15,13 @@
       "when": 1791022926836,
       "tag": "0001_clinic_sync_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791953188217,
+      "tag": "0002_more_collections",
+      "breakpoints": true
     }
   ]
 }
