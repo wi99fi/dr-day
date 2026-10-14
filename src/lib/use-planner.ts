@@ -3,10 +3,12 @@ import { useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import type { PlannerEvent, PlannerTask, ShoppingItem } from "./planner";
+export type WaitlistItem = { id: string; patient: string; phone: string; procedure: string; durationMinutes: number; note: string };
+export type EventTemplate = { id: string; name: string; type: PlannerEvent["type"]; durationMinutes: number; place: string; note: string };
 
-type Snapshot = { events: PlannerEvent[]; tasks: PlannerTask[]; shopping: ShoppingItem[] };
+export type Snapshot = { events: PlannerEvent[]; tasks: PlannerTask[]; shopping: ShoppingItem[]; waitlist: WaitlistItem[]; templates: EventTemplate[] };
 type Name = keyof Snapshot;
-const EMPTY: Snapshot = { events: [], tasks: [], shopping: [] };
+const EMPTY: Snapshot = { events: [], tasks: [], shopping: [], waitlist: [], templates: [] };
 
 export function usePlanner(userId: string) {
   const qc = useQueryClient();
@@ -52,12 +54,16 @@ export function usePlanner(userId: string) {
     events: query.data?.events ?? [],
     tasks: query.data?.tasks ?? [],
     shopping: query.data?.shopping ?? [],
+    waitlist: query.data?.waitlist ?? [],
+    templates: query.data?.templates ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
     reload: query.refetch,
     saveEvents: (i: PlannerEvent[]) => save("events", i),
     saveTasks: (i: PlannerTask[]) => save("tasks", i),
     saveShopping: (i: ShoppingItem[]) => save("shopping", i),
+    saveWaitlist: (i: WaitlistItem[]) => save("waitlist", i),
+    saveTemplates: (i: EventTemplate[]) => save("templates", i),
   };
 }
 export type Planner = ReturnType<typeof usePlanner>;
