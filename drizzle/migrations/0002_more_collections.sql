@@ -1,0 +1,2 @@
+ALTER TABLE public.planner_collections DROP CONSTRAINT planner_collections_collection_check;
+ALTER TABLE public.planner_collections ADD CONSTRAINT planner_collections_collection_check CHECK (collection = ANY (ARRAY['events','tasks','shopping','waitlist','templates']));

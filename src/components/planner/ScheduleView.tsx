@@ -205,8 +205,19 @@ export function ScheduleView({ p }: { p: Planner }) {
       <Sheet open={open} title={editingId ? "تعديل الموعد أو النشاط" : "إضافة موعد أو نشاط"} onClose={() => setOpen(false)}
         footer={<div className="flex gap-2">
           {editingId ? <PrimaryButton variant="secondary" className="w-auto" onClick={() => { const e = events.find((i) => i.id === editingId); if (e) remove(e); }}><Trash2 className="h-4 w-4" /></PrimaryButton> : null}
+          <PrimaryButton variant="secondary" className="w-auto text-xs" onClick={async () => {
+            const name = prompt("اسم القالب (مثل: قلع ضرس عقل)", type === "other" ? activityName : note.slice(0, 30));
+            if (!name?.trim()) return;
+            const h = toNumber(hours);
+            try { await p.saveTemplates([...p.templates, { id: newId(), name: name.trim(), type, durationMinutes: Math.round((Number.isFinite(h) && h > 0 ? h : 1) * 60), place: place.trim(), note: note.trim() }]); toast.success("حُفظ القالب"); }
+            catch { toast.error("تعذر حفظ القالب"); }
+          }}>حفظ كقالب</PrimaryButton>
           <PrimaryButton onClick={save} disabled={saving}>{saving ? "جارٍ الحفظ..." : "حفظ"}</PrimaryButton>
         </div>}>
+        {!editingId && p.templates.length > 0 ? <div className="space-y-2">
+          <p className="text-sm font-medium text-muted-foreground">قوالب سريعة</p>
+          <div className="flex flex-wrap gap-2">{p.templates.map((t) => <Chip key={t.id} active={false} onClick={() => { setType(t.type); setHours(String(t.durationMinutes / 60)); setPlace(t.place); setNote(t.note); if (t.type === "other") setActivityName(t.name); }}><EventIcon type={t.type} />{t.name}</Chip>)}</div>
+        </div> : null}
         {[{ label: "المواعيد الطبية", items: APPOINTMENT_TYPES }, { label: "نشاطات يومية", items: ACTIVITY_TYPES }].map((group) => (
           <div key={group.label} className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">{group.label}</p>
