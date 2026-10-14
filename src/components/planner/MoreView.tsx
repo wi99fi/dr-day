@@ -26,7 +26,7 @@ function Waitlist({ p }: { p: Planner }) {
   const [booking, setBooking] = useState<string | null>(null);
   const [date, setDate] = useState(dateKey(new Date())); const [time, setTime] = useState("10:00");
   const add = async () => {
-    if (!patient.trim()) return toast.error("أدخل اسم المريض");
+    if (!patient.trim()) { toast.error("أدخل اسم المريض"); return; }
     try { await p.saveWaitlist([{ id: newId(), patient: patient.trim(), phone: phone.trim(), procedure: procedure.trim(), durationMinutes: Math.max(5, Math.round(toNumber(mins) || 60)), note: "" }, ...p.waitlist]); setPatient(""); setPhone(""); setProcedure(""); }
     catch { toast.error("تعذر الحفظ"); }
   };
@@ -111,7 +111,7 @@ function Report({ p }: { p: Planner }) {
     download(new Blob([csv], { type: "text/csv;charset=utf-8" }), `تقرير-${month}.csv`);
   };
   const pdf = () => {
-    const w = window.open("", "_blank"); if (!w) return toast.error("اسمح بالنوافذ المنبثقة");
+    const w = window.open("", "_blank"); if (!w) { toast.error("اسمح بالنوافذ المنبثقة"); return; }
     const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
     w.document.write(`<html dir="rtl"><head><meta charset="utf-8"><title>تقرير ${month}</title><style>body{font-family:sans-serif;padding:24px}table{border-collapse:collapse;width:100%;font-size:12px}td,th{border:1px solid #ccc;padding:6px}th{background:#e6f4f1}</style></head><body><h2>تقرير المواعيد والدخل — ${month}</h2><p>عدد المواعيد: ${rows.length} · حصتي: ${share}</p><table>${table.map((r, i) => `<tr>${r.map((c) => i === 0 ? `<th>${esc(c)}</th>` : `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table><script>onload=()=>print()</script></body></html>`);
     w.document.close();
