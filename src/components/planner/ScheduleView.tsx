@@ -157,7 +157,7 @@ export function ScheduleView({ p }: { p: Planner }) {
       </div>
       {conflict ? <div className="flex items-center gap-2 rounded-xl bg-warning/15 px-3 py-2 text-sm text-warning-foreground"><AlertTriangle className="h-4 w-4" />يوجد تعارض بين مواعيد هذا اليوم</div> : null}
 
-      {dayEvents.length ? (
+      {positioned.length ? (
         <Panel className="p-0">
           <div className="max-h-[420px] overflow-y-auto">
             <div className="relative" style={{ height: 24 * HOUR_PX }}>
@@ -171,7 +171,7 @@ export function ScheduleView({ p }: { p: Planner }) {
                   <button key={event.id} onClick={() => openEdit(event)}
                     className="absolute overflow-hidden rounded-lg border border-border bg-accent px-2 py-1 text-right text-xs text-accent-foreground shadow-soft"
                     style={{ top: (s / 60) * HOUR_PX, height: Math.max(20, ((end - s) / 60) * HOUR_PX - 2), right: `${(lane / laneCount) * 100}%`, width: `calc(${100 / laneCount}% - 4px)` }}>
-                    <div className="flex items-center gap-1 font-semibold"><EventIcon type={event.type} activityIcon={event.activityIcon} className="h-3.5 w-3.5" /><span className="truncate">{eventLabel(event)}</span></div>
+                    <div className="flex items-center gap-1 font-semibold"><EventIcon type={event.type} activityIcon={event.activityIcon} className="h-3.5 w-3.5" /><span className={`truncate ${event.done ? "line-through opacity-70" : ""}`}>{eventLabel(event)}</span>{event.done ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-primary" /> : null}</div>
                     <div className="opacity-90">{formatTime(startMinute(event))} – {formatTime(startMinute(event) + event.durationMinutes)}{event.place ? ` · ${event.place}` : ""}</div>
                   </button>
                 ))}
@@ -234,6 +234,15 @@ export function ScheduleView({ p }: { p: Planner }) {
           </>
         ) : null}
         <Field label="ملاحظة" value={note} onChange={(e) => setNote(e.target.value)} placeholder="اختياري" />
+        {editingId ? (
+          <div className="space-y-2 rounded-xl border border-border p-3">
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <input type="checkbox" checked={done} onChange={(e) => setDone(e.target.checked)} className="h-4 w-4 accent-primary" />
+              تم إنجاز هذا الموعد
+            </label>
+            {done ? <Field label="ما الذي أُنجز؟ (اختياري)" value={doneNote} onChange={(e) => setDoneNote(e.target.value)} placeholder="مثال: تم قلع الضرس ووصف مسكّن" /> : null}
+          </div>
+        ) : null}
         {!editingId ? (
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium">
