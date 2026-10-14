@@ -157,7 +157,7 @@ export function ScheduleView({ p }: { p: Planner }) {
       </div>
       {conflict ? <div className="flex items-center gap-2 rounded-xl bg-warning/15 px-3 py-2 text-sm text-warning-foreground"><AlertTriangle className="h-4 w-4" />يوجد تعارض بين مواعيد هذا اليوم</div> : null}
 
-      {dayEvents.length ? (
+      {positioned.length ? (
         <Panel className="p-0">
           <div className="max-h-[420px] overflow-y-auto">
             <div className="relative" style={{ height: 24 * HOUR_PX }}>
