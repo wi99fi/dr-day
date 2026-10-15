@@ -214,10 +214,10 @@ export function ScheduleView({ p }: { p: Planner }) {
           }}>حفظ كقالب</PrimaryButton>
           <PrimaryButton onClick={save} disabled={saving}>{saving ? "جارٍ الحفظ..." : "حفظ"}</PrimaryButton>
         </div>}>
-        {!editingId && p.templates.length > 0 ? <div className="space-y-2">
+        {!editingId && (p.templates?.length ?? 0) > 0 ? <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">قوالب سريعة</p>
-          <div className="flex flex-wrap gap-2">{p.templates.map((t) => <Chip key={t.id} active={false} onClick={() => { setType(t.type); setHours(String(t.durationMinutes / 60)); setPlace(t.place); setNote(t.note); if (t.type === "other") setActivityName(t.name); }}><EventIcon type={t.type} />{t.name}</Chip>)}</div>
-        </div> : null}
+          <div className="flex flex-wrap gap-2">{(p.templates ?? []).map((t) => <Chip key={t.id} active={false} onClick={() => { setType(t.type); setHours(String(t.durationMinutes / 60)); setPlace(t.place); setNote(t.note); if (t.type === "other") setActivityName(t.name); }}><EventIcon type={t.type} />{t.name}</Chip>)}</div>
+         </div> : null}
         {[{ label: "المواعيد الطبية", items: APPOINTMENT_TYPES }, { label: "نشاطات يومية", items: ACTIVITY_TYPES }].map((group) => (
           <div key={group.label} className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">{group.label}</p>
