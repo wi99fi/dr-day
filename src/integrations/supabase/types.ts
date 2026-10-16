@@ -56,6 +56,60 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          lat: number
+          lead_minutes: number
+          lng: number
+          madhab: string
+          method: string
+          p256dh: string
+          prayer_tz: string
+          sent_keys: Json
+          tz: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          lat?: number
+          lead_minutes?: number
+          lng?: number
+          madhab?: string
+          method?: string
+          p256dh: string
+          prayer_tz?: string
+          sent_keys?: Json
+          tz?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          lat?: number
+          lead_minutes?: number
+          lng?: number
+          madhab?: string
+          method?: string
+          p256dh?: string
+          prayer_tz?: string
+          sent_keys?: Json
+          tz?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
