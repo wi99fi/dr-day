@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, CloudOff, LogOut, Plus, Sparkles, Trash2 } from "lucide-react";
 import { isPrayerTimeEvent, prayerEventsAround } from "@/lib/prayer-times";
+import { usePrayerSettings } from "@/lib/use-prayer-settings";
 import { AiArrangeSheet } from "./AiArrangeSheet";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +19,7 @@ const HOUR_PX = 36;
 
 export function ScheduleView({ p }: { p: Planner }) {
   const { events } = p;
+  const prayerVersion = usePrayerSettings().version;
   const [month, setMonth] = useState(() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); });
   const [selected, setSelected] = useState(() => new Date());
   const [open, setOpen] = useState(false);
@@ -41,8 +43,8 @@ export function ScheduleView({ p }: { p: Planner }) {
   const [doneNote, setDoneNote] = useState("");
 
   const cells = useMemo(() => monthCells(month), [month]);
-  const shown = useMemo(() => [...events, ...prayerEventsAround(selected)], [events, selected]);
-  const timerEvents = useMemo(() => [...events, ...prayerEventsAround(new Date())], [events]);
+  const shown = useMemo(() => [...events, ...prayerEventsAround(selected)], [events, selected, prayerVersion]);
+  const timerEvents = useMemo(() => [...events, ...prayerEventsAround(new Date())], [events, prayerVersion]);
   const dayEvents = useMemo(() => events.filter((e) => segmentOnDate(e, selected)).sort((a, b) => startMinute(a) - startMinute(b)), [events, selected]);
   const positioned = useMemo(() => groupTimeline(shown, selected), [shown, selected]);
   const conflict = useMemo(() => hasConflicts(events, selected), [events, selected]);

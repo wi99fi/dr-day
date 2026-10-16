@@ -1,20 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { Bell, Download, FileSpreadsheet, Printer, Trash2, Upload, UserPlus, Users } from "lucide-react";
+import { Bell, Download, FileSpreadsheet, LocateFixed, Printer, Trash2, Upload, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
 import type { Planner, WaitlistItem } from "@/lib/use-planner";
 import { appointmentType, dateKey, eventLabel, isPersonalActivity, newId, parseDate, toNumber, type PlannerEvent } from "@/lib/planner";
 import { Field, PageHeader, Panel, PrimaryButton } from "./ui";
 import { EventIcon } from "./EventIcon";
+import { CITIES, CUSTOM_CITY_ID, findCity } from "@/lib/cities";
+import { PRAYER_METHODS, prayerEventsFor, savePrayerSettings, type PrayerMethodId, type PrayerSettings } from "@/lib/prayer-times";
+import { usePrayerSettings } from "@/lib/use-prayer-settings";
+import { REMINDER_KEY, disablePush, enablePush, getPushStatus, syncPush, type PushStatus } from "@/lib/push/client";
 
-const REMINDER_KEY = "dr-day-reminder-minutes";
-
-export function MoreView({ p }: { p: Planner }) {
+export function MoreView({ p, userId }: { p: Planner; userId: string }) {
   return (
     <div className="space-y-5">
       <PageHeader eyebrow="منظّم يوم الطبيب" title="أدوات إضافية" />
       <Waitlist p={p} />
       <Templates p={p} />
-      <Reminders />
+      <PrayerSettingsPanel userId={userId} />
+      <Reminders userId={userId} />
       <Report p={p} />
       <Backup p={p} />
     </div>
@@ -80,21 +83,88 @@ function Templates({ p }: { p: Planner }) {
   );
 }
 
-function Reminders() {
+const SELECT_CLS = "w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-base outline-none focus:border-primary focus:ring-2 focus:ring-ring/30";
+
+function PrayerSettingsPanel({ userId }: { userId: string }) {
+  const s = usePrayerSettings();
+  const [locating, setLocating] = useState(false);
+  const apply = (next: PrayerSettings) => { savePrayerSettings(next); void syncPush(userId); };
+  const current: PrayerSettings = { cityId: s.cityId, lat: s.lat, lng: s.lng, tz: s.tz, method: s.method, madhab: s.madhab };
+  const changeCity = (id: string) => {
+    const c = findCity(id);
+    if (c) apply({ ...current, cityId: c.id, lat: c.lat, lng: c.lng, tz: c.tz });
+  };
+  const locate = () => {
+    if (!("geolocation" in navigator)) { toast.error("الموقع غير مدعوم على هذا الجهاز"); return; }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        apply({ ...current, cityId: CUSTOM_CITY_ID, lat: pos.coords.latitude, lng: pos.coords.longitude, tz: Intl.DateTimeFormat().resolvedOptions().timeZone || current.tz });
+        toast.success("تم ضبط أوقات الصلاة على موقعك");
+      },
+      () => { setLocating(false); toast.error("تعذّر تحديد الموقع — اختر مدينتك من القائمة"); },
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 },
+    );
+  };
+  const today = prayerEventsFor(new Date());
+  return (
+    <Panel className="space-y-3">
+      <h2 className="flex items-center gap-2 font-bold"><LocateFixed className="h-5 w-5 text-primary" />أوقات الصلاة حسب المدينة</h2>
+      <label className="block space-y-1.5">
+        <span className="text-sm font-medium text-muted-foreground">المدينة</span>
+        <select className={SELECT_CLS} value={s.cityId} onChange={(e) => changeCity(e.target.value)}>
+          {s.cityId === CUSTOM_CITY_ID ? <option value={CUSTOM_CITY_ID}>موقعي الحالي</option> : null}
+          {CITIES.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </label>
+      <PrimaryButton variant="secondary" onClick={locate} disabled={locating}><LocateFixed className="h-4 w-4" />{locating ? "جارٍ التحديد…" : "استخدم موقعي الحالي"}</PrimaryButton>
+      <label className="block space-y-1.5">
+        <span className="text-sm font-medium text-muted-foreground">طريقة الحساب</span>
+        <select className={SELECT_CLS} value={s.method} onChange={(e) => apply({ ...current, method: e.target.value as PrayerMethodId })}>
+          {PRAYER_METHODS.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+        </select>
+      </label>
+      <div className="space-y-1.5">
+        <span className="text-sm font-medium text-muted-foreground">وقت العصر</span>
+        <div className="flex gap-2">
+          <PrimaryButton variant={s.madhab === "shafi" ? "primary" : "secondary"} onClick={() => apply({ ...current, madhab: "shafi" })}>جمهور (ظل المثل)</PrimaryButton>
+          <PrimaryButton variant={s.madhab === "hanafi" ? "primary" : "secondary"} onClick={() => apply({ ...current, madhab: "hanafi" })}>حنفي (ظل المثلين)</PrimaryButton>
+        </div>
+      </div>
+      <div className="grid grid-cols-5 gap-1 rounded-xl bg-secondary p-2 text-center text-xs">
+        {today.map((e) => <div key={e.id}><div className="text-muted-foreground">{e.activityName?.replace("صلاة ", "")}</div><div className="font-semibold" dir="ltr">{e.startTime}</div></div>)}
+      </div>
+    </Panel>
+  );
+}
+
+const PUSH_NOTE: Record<PushStatus, string> = {
+  on: "✓ يصلك التذكير حتى لو كان التطبيق مغلقاً.",
+  off: "التذكير يعمل داخل التطبيق فقط حتى تفعّل الإشعارات.",
+  denied: "الإشعارات محظورة. فعّلها من إعدادات المتصفح أو الهاتف للموقع ثم أعد المحاولة.",
+  unsupported: "هذا المتصفح لا يدعم الإشعارات الخلفية. على iPhone: أضف التطبيق إلى الشاشة الرئيسية (مشاركة ← إضافة إلى الشاشة الرئيسية) ثم افتحه منها.",
+  unconfigured: "لم يُضبط مفتاح الإرسال على الخادم بعد، فالتذكير داخل التطبيق فقط.",
+};
+
+function Reminders({ userId }: { userId: string }) {
   const [mins, setMins] = useState(0);
-  useEffect(() => { setMins(Number(localStorage.getItem(REMINDER_KEY) ?? 0)); }, []);
+  const [status, setStatus] = useState<PushStatus>("off");
+  useEffect(() => { setMins(Number(localStorage.getItem(REMINDER_KEY) ?? 0)); void getPushStatus().then(setStatus); }, []);
   const choose = async (m: number) => {
-    if (m > 0 && "Notification" in window && Notification.permission !== "granted") {
-      const r = await Notification.requestPermission();
-      if (r !== "granted") toast("لم يُسمح بالإشعارات — ستظهر التذكيرات داخل التطبيق فقط.");
-    }
     localStorage.setItem(REMINDER_KEY, String(m)); setMins(m); window.dispatchEvent(new Event("reminder-change"));
+    try {
+      if (m === 0) { await disablePush(userId); setStatus(await getPushStatus()); return; }
+      const st = await enablePush(userId, m);
+      setStatus(st);
+      if (st === "off" && "Notification" in window && Notification.permission !== "granted") toast("لم يُسمح بالإشعارات — ستظهر التذكيرات داخل التطبيق فقط.");
+    } catch { toast.error("تعذّر تفعيل الإشعارات الخلفية"); setStatus(await getPushStatus()); }
   };
   return (
     <Panel className="space-y-3">
       <h2 className="flex items-center gap-2 font-bold"><Bell className="h-5 w-5 text-primary" />تذكير قبل الموعد والصلاة</h2>
       <div className="flex gap-2">{[0, 10, 15].map((m) => <PrimaryButton key={m} variant={mins === m ? "primary" : "secondary"} onClick={() => choose(m)}>{m === 0 ? "إيقاف" : `${m} دقيقة`}</PrimaryButton>)}</div>
-      <p className="text-xs text-muted-foreground">يعمل التذكير ما دام التطبيق مفتوحاً على هذا الجهاز.</p>
+      <p className="text-xs text-muted-foreground">{mins === 0 ? "اختر مدة التذكير لتفعيله." : PUSH_NOTE[status]}</p>
     </Panel>
   );
 }
