@@ -14,6 +14,7 @@ import { SettingsAccess } from "@/components/planner/SettingsAccess";
 import { PrimaryButton } from "@/components/planner/ui";
 import { MoreView, useReminders } from "@/components/planner/MoreView";
 import { prayerEventsAround } from "@/lib/prayer-times";
+import { syncPush } from "@/lib/push/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -56,13 +57,14 @@ function App({ userId }: { userId: string }) {
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("schedule");
   const [settingsOpen, setSettingsOpen] = useState(false);
   useReminders(p.events, prayerEventsAround);
+  useEffect(() => { void syncPush(userId); }, [userId]);
   return (
     <div className="min-h-screen bg-hero pb-28">
       <main className="mx-auto max-w-2xl px-4 pt-6">
         {settingsOpen ? <>
           <PrimaryButton variant="secondary" className="mb-4 w-auto" onClick={() => setSettingsOpen(false)}><ArrowRight className="h-4 w-4" />العودة</PrimaryButton>
           <SettingsView userId={userId} onSignOut={() => supabase.auth.signOut()} />
-        </> : tab === "schedule" ? <ScheduleView p={p} /> : tab === "dashboard" ? <DashboardView p={p} /> : tab === "tasks" ? <TasksView p={p} /> : tab === "shopping" ? <ShoppingView p={p} /> : <MoreView p={p} />}
+        </> : tab === "schedule" ? <ScheduleView p={p} /> : tab === "dashboard" ? <DashboardView p={p} /> : tab === "tasks" ? <TasksView p={p} /> : tab === "shopping" ? <ShoppingView p={p} /> : <MoreView p={p} userId={userId} />}
       </main>
       {!settingsOpen && <SettingsAccess onUnlock={() => setSettingsOpen(true)} />}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur">
